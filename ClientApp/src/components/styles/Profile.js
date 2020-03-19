@@ -1,0 +1,3 @@
+﻿const Label = {
+    display: "block"
+};
