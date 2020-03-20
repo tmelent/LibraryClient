@@ -13,7 +13,7 @@ class NavMenu extends Component {
         await this.getProfileData();
     }
 
-    componentWillReceiveProps() {
+    UNSAFE_componentWillReceiveProps() {
         if (!this.props.isLogged) {
             this.getProfileData();
         }
@@ -85,11 +85,8 @@ class NavMenu extends Component {
                                     <NavLink tag={Link} className="text-dark" to="/">Home</NavLink>
                                 </NavItem>
                                 <NavItem>
-                                    <NavLink tag={Link} className="text-dark" to="/counter">Counter</NavLink>
-                                </NavItem>
-                                <NavItem>
-                                    <NavLink tag={Link} className="text-dark" to="/fetch-data">Fetch data</NavLink>
-                                </NavItem>
+                                    <NavLink tag={Link} className="text-dark" to="/books">Books</NavLink>
+                                </NavItem>                                
                                 {loginMenu}
                             </ul>
                         </Collapse>

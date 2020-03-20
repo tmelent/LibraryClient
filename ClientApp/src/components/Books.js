@@ -1,10 +1,11 @@
 ﻿import React, { Component } from 'react';
-import { Row, Col, Container } from 'reactstrap';
+import {Spinner, Row, Col, Container } from 'reactstrap';
 export class Books extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            books: []
+            books: [],
+            isFetching: true
         }
         this.fetchData = this.fetchData.bind(this);
     }
@@ -24,10 +25,15 @@ export class Books extends Component {
             body: JSON.stringify(data)
         })
             .then(response => response.json())
-            .then(result => this.setState({ books: result }));
+            .then(result => this.setState({ books: result, isFetching:false }));
     }
 
     render() {
+        if (this.state.isFetching) {
+            return (
+                <Spinner animation="grow" variant="dark" />
+            );
+        }
         if (this.state.books !== null || this.state.books !== undefined) {
             var bookTitles = this.state.books.map((b) => <div><b>{b.bookTitle} ({b.publishYear})</b></div>);
             var bookAuthors = this.state.books.map((a) => <div>{a.authorName}</div>);
@@ -50,6 +56,7 @@ export class Books extends Component {
                 </Container>
             );
         }
-        return null;
+        
+         
     }
 }

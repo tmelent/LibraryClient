@@ -35,22 +35,25 @@ namespace LibraryClient.Controllers
         {
             var accessToken = HttpContext.Request.Cookies["access_token"];
             var refreshToken = HttpContext.Request.Cookies["refresh_token"];
-            var tokenRequestModel = new RefreshTokenRequest { OldAccessToken = accessToken, OldRefreshToken = refreshToken };
-            var str = new StringContent(System.Text.Json.JsonSerializer.Serialize(tokenRequestModel).ToString(), Encoding.UTF8, "application/json");
-            var response = await _client.PostAsync("https://localhost:44336/api/account/refreshtoken", str);
-            switch (response.StatusCode)
+            if (HttpContext.Request.Cookies.ContainsKey("access_token") && HttpContext.Request.Cookies.ContainsKey("refresh_token"))
             {
-                case HttpStatusCode.OK:
-                    {
-                        var result = JsonConvert.DeserializeObject<TokenModel>(await response.Content.ReadAsStringAsync());
-                        Response.Cookies.Delete("access_token");
-                        Response.Cookies.Delete("refresh_token");
-                        Response.Cookies.Append("access_token", result.AccessToken, new CookieOptions() { Expires = DateTime.UtcNow.AddHours(10) });
-                        Response.Cookies.Append("refresh_token", result.RefreshToken.Token, new CookieOptions() { Expires = DateTime.UtcNow.AddHours(10) });
-                        return Ok();
-                    }
-                case HttpStatusCode.InternalServerError:
-                    return StatusCode(500);
+                var tokenRequestModel = new RefreshTokenRequest { OldAccessToken = accessToken, OldRefreshToken = refreshToken };
+                var str = new StringContent(System.Text.Json.JsonSerializer.Serialize(tokenRequestModel).ToString(), Encoding.UTF8, "application/json");
+                var response = await _client.PostAsync("https://localhost:44336/api/account/refreshtoken", str);
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                        {
+                            var result = JsonConvert.DeserializeObject<TokenModel>(await response.Content.ReadAsStringAsync());
+                            Response.Cookies.Delete("access_token");
+                            Response.Cookies.Delete("refresh_token");
+                            Response.Cookies.Append("access_token", result.AccessToken, new CookieOptions() { Expires = DateTime.UtcNow.AddHours(10) });
+                            Response.Cookies.Append("refresh_token", result.RefreshToken.Token, new CookieOptions() { Expires = DateTime.UtcNow.AddHours(10) });
+                            return Ok();
+                        }
+                    case HttpStatusCode.InternalServerError:
+                        return StatusCode(500);
+                }
             }
             return BadRequest();
         }
@@ -90,32 +93,39 @@ namespace LibraryClient.Controllers
         /// <summary>
         /// Добавляет заголовок для авторизации
         /// </summary>
-        private void AddAuthorizationHeader()
+        private bool AddAuthorizationHeader()
         {
-            _client.DefaultRequestHeaders.Remove("Authorization");
-            _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {HttpContext.Request.Cookies["access_token"]}");
+            if (HttpContext.Request.Cookies.ContainsKey("access_token"))
+            {
+                _client.DefaultRequestHeaders.Remove("Authorization");
+                _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {HttpContext.Request.Cookies["access_token"]}");
+                return true;
+            }
+            return false;
         }
 
         [HttpPost("getProfileData")]
         public async Task<IActionResult> GetProfileData()
         {
-            AddAuthorizationHeader();
-            var response = await _client.PostAsync("https://localhost:44336/api/account/getProfileData", null);
-            if (response.IsSuccessStatusCode)
-                return Ok(await response.Content.ReadAsStringAsync());
-            switch (response.StatusCode)
+            if (AddAuthorizationHeader())
             {
-                // Попытка обновить токен при неудаче
-                case (HttpStatusCode.Unauthorized):
-                    await RefreshToken();
-                    AddAuthorizationHeader();
-                    var secondTryResponse = await _client.PostAsync("https://localhost:44336/api/account/getProfileData", null);
-                    if (secondTryResponse.StatusCode == HttpStatusCode.Unauthorized)
-                        return Unauthorized();
-                    else
-                        return Ok(await secondTryResponse.Content.ReadAsStringAsync());
-                case (HttpStatusCode.InternalServerError):
-                    return StatusCode(500);
+                var response = await _client.PostAsync("https://localhost:44336/api/account/getProfileData", null);
+                if (response.IsSuccessStatusCode)
+                    return Ok(await response.Content.ReadAsStringAsync());
+                switch (response.StatusCode)
+                {
+                    // Попытка обновить токен при неудаче
+                    case (HttpStatusCode.Unauthorized):
+                        await RefreshToken();
+                        AddAuthorizationHeader();
+                        var secondTryResponse = await _client.PostAsync("https://localhost:44336/api/account/getProfileData", null);
+                        if (secondTryResponse.StatusCode == HttpStatusCode.Unauthorized)
+                            return Unauthorized();
+                        else
+                            return Ok(await secondTryResponse.Content.ReadAsStringAsync());
+                    case (HttpStatusCode.InternalServerError):
+                        return StatusCode(500);
+                }
             }
             return BadRequest();
         }
@@ -123,15 +133,18 @@ namespace LibraryClient.Controllers
         [HttpPost("updateProfileData")]
         public async Task<IActionResult> UpdateProfileData(UpdateProfileModel upm)
         {
-            var str = new StringContent(System.Text.Json.JsonSerializer.Serialize(upm).ToString(), Encoding.UTF8, "application/json");
-            AddAuthorizationHeader();
-            var response = await _client.PostAsync("https://localhost:44336/api/account/updateProfileData", str);
-            switch (response.StatusCode)
+            if (AddAuthorizationHeader())
             {
-                case HttpStatusCode.OK:
-                    return Ok();
-                case HttpStatusCode.InternalServerError:
-                    return StatusCode(500);
+                var str = new StringContent(System.Text.Json.JsonSerializer.Serialize(upm).ToString(), Encoding.UTF8, "application/json");
+
+                var response = await _client.PostAsync("https://localhost:44336/api/account/updateProfileData", str);
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                        return Ok();
+                    case HttpStatusCode.InternalServerError:
+                        return StatusCode(500);
+                }
             }
             return BadRequest();
         }
@@ -156,14 +169,12 @@ namespace LibraryClient.Controllers
                 }
                 return Ok();
             }
-            switch (response.StatusCode)
+            return response.StatusCode switch
             {
-                case HttpStatusCode.OK:
-                    return Ok();
-                case HttpStatusCode.InternalServerError:
-                    return StatusCode(500);
-            }
-            return BadRequest();
+                HttpStatusCode.OK => Ok(),
+                HttpStatusCode.InternalServerError => StatusCode(500),
+                _ => BadRequest(),
+            };
         }
     }
 }
