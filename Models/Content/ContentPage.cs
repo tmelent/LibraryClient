@@ -12,12 +12,10 @@ namespace LibraryClient.Models.Content
     {
         public List<BookResponse> Books { get; set; }
     }
-
-
     
     public class BookResponse
-    {
-        
+    {        
+        public int BookId { get; set; }
         public string BookTitle { get; set; }
         public string AuthorName { get; set; }
         public string Description { get; set; }

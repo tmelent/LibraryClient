@@ -66,7 +66,7 @@ export class Register extends Component {
                     <input type="text" id="firstName" onChange={this.onChangeFirstName} name="firstName" placeholder="First Name" />
                     <input type="text" id="lastName" onChange={this.onChangeLastName} name="lastName" placeholder="Last Name" />
                     <input type="tel" id="phoneNumber" onChange={this.onChangePhone} name="phone" placeholder="Phone number" />
-                    <Button className="btn btn-primary" onClick={this.register} value="Register" />
+                    <Button className="btn btn-primary" onClick={this.register}>Register</Button>
                 </form>
             </Col>
         )

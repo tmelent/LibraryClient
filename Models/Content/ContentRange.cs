@@ -19,4 +19,9 @@ namespace LibraryClient.Models.Content
         /// </summary>
         public int Last { get; set; }
     }
+
+    public class Page
+    {
+        public int PageNumber { get; set; }
+    }
 }

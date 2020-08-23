@@ -27,11 +27,10 @@ namespace LibraryClient.Controllers
             _client.DefaultRequestHeaders.Add("User-Agent", "Library");
         }
 
-        [HttpPost("getBooksInRange")]
-        public async Task<IActionResult> GetBooksInRange(ContentRange range)
-        {
-            var str = new StringContent(System.Text.Json.JsonSerializer.Serialize(range).ToString(), Encoding.UTF8, "application/json");
-            var response = await _client.PostAsync("https://localhost:44336/api/book/getBooksInRange", str);
+        [HttpPost("getAllBooks")]
+        public async Task<IActionResult> GetAllBooks()
+        {            
+            var response = await _client.PostAsync("https://localhost:44336/api/book/getAllBooks", null);
             switch (response.StatusCode)
             {
                 case HttpStatusCode.OK:
@@ -45,9 +44,40 @@ namespace LibraryClient.Controllers
             return BadRequest();
         }
 
-        public Task<IActionResult> GetSingleBook(int id)
+        [HttpPost("getBooksInRange")]
+        public async Task<IActionResult> GetBooksInRange(Page page)
         {
-            throw new NotImplementedException();
+            var range = new ContentRange { First = 9 * (page.PageNumber - 1) + 1, Last = 9 * page.PageNumber };
+            var str = new StringContent(System.Text.Json.JsonSerializer.Serialize(range).ToString(), Encoding.UTF8, "application/json");
+            var response = await _client.PostAsync("https://localhost:44336/api/book/getBooksInRange", str);
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    {
+                        var result = JsonConvert.DeserializeObject<List<BookResponse>>(await response.Content.ReadAsStringAsync());
+                        return Ok(result);
+                    }
+                case HttpStatusCode.InternalServerError:
+                    return StatusCode(500);
+            }
+            return BadRequest();
+        }
+
+        [HttpGet("getBookById/{id}")]
+        public async Task<IActionResult> GetSingleBook(int id)
+        {
+            var response = await _client.GetAsync("https://localhost:44336/api/book/getBookById/" + id);
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    {
+                        var result = JsonConvert.DeserializeObject<BookResponse>(await response.Content.ReadAsStringAsync());
+                        return Ok(result);
+                    }
+                case HttpStatusCode.InternalServerError:
+                    return StatusCode(500);
+            }
+            return BadRequest();
         }
     }
 }

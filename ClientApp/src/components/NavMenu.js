@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import './NavMenu.css';
 import { connect } from "react-redux";
 import logInAccount from '../actions/AccountActions';
-import store from '../store/Store';
 
 class NavMenu extends Component {
     static displayName = NavMenu.name;
@@ -51,7 +50,7 @@ class NavMenu extends Component {
                 firstName: result.firstName,
                 login: result.login
             });
-            store.dispatch(logInAccount(this.state.login, true));
+            this.props.logInAccount(this.state.login, true);
         }
     }
 
@@ -63,7 +62,7 @@ class NavMenu extends Component {
                 'Content-Type': "application/json"
             }
         });
-        store.dispatch(logInAccount('', false));
+        this.props.logInAccount('', false);
         this.setState({ firstName: "" });
     }
 
@@ -99,8 +98,8 @@ class NavMenu extends Component {
 
 const mapStateToProps = state => {
     return {
-        username: state.username,
-        isLogged: state.isLogged
+        username: state.account.username,
+        isLogged: state.account.isLogged
     }
 }
 

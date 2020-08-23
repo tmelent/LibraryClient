@@ -2,8 +2,8 @@
 import { Col, Button, Spinner } from 'reactstrap';
 import { connect } from "react-redux";  
 import logInAccount from '../actions/AccountActions';
-import store from '../store/Store';
 import { Link } from 'react-router-dom';
+
 import './styles/Login.css';
 
 class Login extends Component {
@@ -33,7 +33,7 @@ class Login extends Component {
             password: this.state.password
         }
         try {
-           await fetch('sendrequest/login', {
+           var response = await fetch('sendrequest/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -41,7 +41,13 @@ class Login extends Component {
                 body: JSON.stringify(data)
            });            
             spinner.setAttribute('hidden', '');
-            store.dispatch(logInAccount(this.state.login, true));            
+            if (response.ok) {
+                this.props.logInAccount(this.state.login, true);
+            } else {
+                loginbtn.innerHTML = spinner.outerHTML + "Войти";
+                alert("Введен неправильный логин или пароль.");                
+            }
+
         }
         catch (error) {
             console.error('Ошибка:', error)
@@ -88,8 +94,8 @@ class Login extends Component {
 
 const mapStateToProps = state => {
     return {
-        username: state.username,
-        isLogged: state.isLogged
+        username: state.account.username,
+        isLogged: state.account.isLogged
     }
 }
 

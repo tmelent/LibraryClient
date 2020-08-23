@@ -8,6 +8,8 @@ namespace LibraryClient.Models
 {
     public class BookResponse
     {
+        [JsonPropertyName("bookId")]
+        public int BookId { get; set; }
         [JsonPropertyName("name")]
         public string Name { get; set; }
         [JsonPropertyName("year")]

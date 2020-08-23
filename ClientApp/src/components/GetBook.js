@@ -1,38 +1,46 @@
 ﻿import React, { Component } from 'react';
+import { Spinner } from 'reactstrap';
 
 export class GetBook extends Component {
     constructor(props) {
         super(props);
-        this.state = {book : []};
+        this.state = {
+            isFetching: true,
+            book: {}
+        }
         this.fetchData = this.fetchData.bind(this);
-        this.showBookInfo = this.showBookInfo.bind(this);
-    }
-    componentDidMount() {
-        this.fetchData();
-    }
-    fetchData() {
-       fetch('sendrequest/getbook/1')
-            .then(response => response.json())
-            .then(result => this.setState({ book: result }));
-        
-    }
-    showBookInfo() {
-        var newel = document.createElement("div");
-        newel.innerHTML = "<h1>" + this.state.book.name + this.state.book.year + this.state.book.description;
-        var mydiv = document.getElementById("kek");
-        document.body.insertBefore(newel, mydiv);
     }
 
+    async componentDidMount() {
+        await this.fetchData();        
+    }   
+    
+    async fetchData() {        
+        
+        var response = await fetch('contentRequests/getBookById/' + this.props.location.state.id,{
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }            
+        })
+        var result = await response.json();      
+        this.setState({ isFetching: false, book: result });
+    }   
+
     render() {
-        if (!this.state.book || !this.state.book.length)
-            return null;
+        if (this.state.isFetching) {
+            return (
+                <Spinner animation="grow" variant="dark" />
+            );
+        }
+        var book = this.state.book;
         return (
             <div>      
-                {this.state.book[0]}
-                <button className="btn btn-primary" id="kek">fetch</button>
+                <h3><b>{book.bookTitle}</b> (<i>{book.publishYear}</i>)</h3>
+                <p>{book.authorName}</p>
+                <p>{book.description}</p>              
             </div>
         );
     }
-
 }
 export default GetBook;

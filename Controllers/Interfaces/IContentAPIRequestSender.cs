@@ -8,12 +8,10 @@ namespace LibraryClient.Controllers.Interfaces
     public interface IContentAPIRequestSender
     {
         /// <summary>
-        /// Запрашивает страницу с книгами
-        /// </summary>
-        /// <param name="first">Первая книга на странице</param>
-        /// <param name="last">Последняя книга на странице</param>
+        /// Запрашивает книги
+        /// </summary>        
         /// <returns></returns>
-        public Task<IActionResult> GetBooksInRange(ContentRange range);
+        public Task<IActionResult> GetAllBooks();
         /// <summary>
         /// Запрашивает все данные об одной книге
         /// </summary>
